@@ -30,7 +30,12 @@
 		{
 			"type": "file",
 			"source": "{{user `binary_location`}}/apache-maven-3.3.9-bin.tar.gz",
-			"destination": "/tmp/apache-maven-3.3.9-bin.tar.gz"
+			"destination": "/tmp/apache-maven.tar.gz"
+		},
+		{
+			"type": "file",
+			"source": "{{user `binary_location}}/jenkins-1.651.2-1.1.noarch.rpm",
+			"destination": "/tmp/jenkins.rpm" 
 		},
 		{
 			"type": "file",
