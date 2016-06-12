@@ -42,6 +42,9 @@
 		},
 		"DnsDomain": {
 			"Type": "String"
+		},
+		"MultiAZ": {
+			"Type": "String"
 		}
 	},
 
@@ -76,7 +79,7 @@
 				"MasterUserPassword": { "Ref": "DatabasePassword" },
 				"Port": "3306",
 				"PubliclyAccessible": "true",
-				"MultiAZ": "true",
+				"MultiAZ": { "Ref": "MultiAZ" },
 				"VPCSecurityGroups": [
 					{ "Ref": "DatabaseSecurityGroup" }
 				]
