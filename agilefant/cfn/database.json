@@ -12,7 +12,7 @@
 		"DatabaseName": {
 			"Type": "String",
 			"AllowedPattern": ".+",
-			"Default": "oordasdata"
+			"Default": "agilefant"
 		},
 		"DatabaseStorage": {
 			"Type": "String",
@@ -35,7 +35,7 @@
 		},
 		"DatabaseSnapshot": {
 			"Type": "String",
-			"Default": "ofantdb-v01"
+			"Default": ""
 		},
 		"DnsId": {
 			"Type": "String"
