@@ -6,6 +6,10 @@ AWS_REGIONNAME="ap-southeast-2"
 
 # Generate a unique identified for this build. UUID is the easiest
 uuid=$(date +"%s")
+if [ -f ami-id ]
+then
+	rm ami-id
+fi
 
 packer build \
 	-var "soe_version=0.1.0" \
