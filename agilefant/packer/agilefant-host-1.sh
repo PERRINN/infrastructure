@@ -34,8 +34,5 @@ packer build \
 	-var "aws_region=ap-southeast-2" \
 	agilefant-base.json
 #
-if [ -f ami-id ]
-then
-	aws ec2 describe-images --filters "Name=name,Values=${longname}" | grep ImageId | awk '{ print $2}' | sed -e 's/"//g' | sed -e 's/,//' > new_ami
-fi
+aws ec2 describe-images --filters "Name=name,Values=${longname}" | grep ImageId | awk '{ print $2}' | sed -e 's/"//g' | sed -e 's/,//' > new_ami
 

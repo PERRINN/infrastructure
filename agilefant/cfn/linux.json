@@ -1,7 +1,7 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
 
-	"Description": "OORDAS Linux Developer Instance 1.0.0 - Author Chris Moran",
+	"Description": "AGILEFANT Linux Developer Instance 1.0.0 - Author Chris Moran",
 
 	"Parameters": {
 		"AWSRegion": {
@@ -230,6 +230,28 @@
 								"group": "tomcat",
 								"authentication": "S3AccessCreds"
 							},
+							"/tmp/agilefant.conf": {
+								"source": { "Fn::Join": [ "", [
+									"https://s3-",
+									{"Ref": "ScriptRegion"},
+									".amazonaws.com/cfnstore/",
+									{ "Ref": "CfnBucketName" },
+									"/",
+									{ "Ref": "StackRelease"},
+									"/config/agilefant.conf.tpl"
+								]] 
+								},
+								"context": {
+									"DBUSER": { "Ref": "DatabaseUser" },
+									"DBPASS": { "Ref": "DatabasePassword" },
+									"DBHOST": { "Ref": "DatabaseHost" },
+									"DBNAME": { "Ref": "DatabaseName" }
+								},
+								"mode": "000644",
+								"owner": "tomcat",
+								"group": "tomcat",
+								"authentication": "S3AccessCreds"							
+							},
 							"/etc/cfn/cfn-hup.conf": {
 								"content": { "Fn::Join": [ "", [
 									"[main]\n",
@@ -307,7 +329,7 @@
 								"command": { "Fn::Join": [ "", ["nrsysmond-config --set license_key=", { "Ref": "NewRelicKey" }]]}
 							},
 							"04_newrelic_agent": {
-								"command": { "Fn::Join": [ "", ["unzip /tmp/newrelic-oordas.zip -d ", "/usr/share/tomcat8"]]}
+								"command": { "Fn::Join": [ "", ["unzip /tmp/newrelic-afant.zip -d ", "/usr/share/tomcat8"]]}
 							},
 							"05_prestart_newrelic": {
 								"command": { "Fn::Join": [ "", [ "chkconfig newrelic-sysmond on" ]]}
@@ -317,6 +339,12 @@
 							},
 							"80_unpack_app": {
 								"command": { "Fn::Join": [ "", [ "mv /tmp/agilefant.war /usr/share/tomcat8/webapps" ]]}
+							},
+							"81_load_config_1": {
+								"command": { "Fn::Join": [ "", [ "service tomcat8 start; sleep 60; service tomcat8 stop" ]]},
+							},
+							"82_load_config_2": {
+								"command": { "Fn::Join": [ "", [ "mv /tmp/agilefant.conf /usr/share/tomcat8/webapps/agilefant/WEB-INF/agilefant.conf" ]]}
 							},
 							"99_prestart_tomcat8": {
 								"command": { "Fn::Join": [ "", [ "chkconfig tomcat8 on" ]]}
@@ -360,4 +388,3 @@
 	}
 
 }
-

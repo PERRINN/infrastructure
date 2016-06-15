@@ -10,7 +10,7 @@
 		},
 		"AdminCIDR": {
 			"Type": "String",
-			"Default": "27.99.5.119/32"
+			"Default": "27.99.1.206/32"
 		},
 		"CfnBucketName": {
 			"Type": "String",
