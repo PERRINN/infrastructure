@@ -91,7 +91,7 @@
 				"HostedZoneId": { "Ref": "DnsId"},
 				"Name": {
 					"Fn::Join" : [ ".", [
-						"db01",
+						"afdb",
 						{ "Ref": "DnsDomain"}
 					] ]
 				},
