@@ -43,7 +43,7 @@
 		},
 		"DatabaseSnapshot": {
 			"Type": "String",
-			"Default": "ofantdb-v01"
+			"Default": ""
 		},
 		"DnsDomain": {
 			"Type": "String",
@@ -78,7 +78,7 @@
 		"LinuxWebServerAmi": {
 			"Type": "String",
 			"AllowedPattern": "ami-[a-f0-9]+",
-			"Default": "ami-12476e71"
+			"Default": "ami-3cf2db5f"
 		},
 		"WebServerInstanceType": {
 			"Type": "String",

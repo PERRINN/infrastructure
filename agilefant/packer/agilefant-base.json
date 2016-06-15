@@ -16,7 +16,7 @@
 			"tags": {
 				"BuildNumber": "{{user `build_number`}}",
 				"BuildUUID": "{{user `build_uuid`}}"
-            },
+            		},
 			"type": "amazon-ebs"
 
 		}
