@@ -341,7 +341,7 @@
 								"command": { "Fn::Join": [ "", [ "mv /tmp/agilefant.war /usr/share/tomcat8/webapps" ]]}
 							},
 							"81_load_config_1": {
-								"command": { "Fn::Join": [ "", [ "service tomcat8 start; sleep 60; service tomcat8 stop" ]]},
+								"command": { "Fn::Join": [ "", [ "service tomcat8 start; sleep 60; service tomcat8 stop" ]]}
 							},
 							"82_load_config_2": {
 								"command": { "Fn::Join": [ "", [ "mv /tmp/agilefant.conf /usr/share/tomcat8/webapps/agilefant/WEB-INF/agilefant.conf" ]]}
