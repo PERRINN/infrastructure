@@ -207,6 +207,7 @@
 				"Parameters": {
 					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] },
 					"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },
+					"CfnBaseName": { "Ref": "CfnBaseName"},
 					"CfnBucketName": { "Ref": "CfnBucketName"},
 					"StackRelease": { "Ref": "StackRelease"},
 					"WebServerAmi": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "linux" ] },

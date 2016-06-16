@@ -8,6 +8,10 @@
 			"Type": "String",
 			"Default": "us-west-2"
 		},
+		"CfnBaseName": {
+			"Type": "String",
+			"Default": "perrincfn"
+		},
 		"CfnBucketName": {
 			"Type": "String",
 			"Default": "agilefant"
@@ -152,12 +156,6 @@
 					"Install": {
 						"packages": {
 							"yum": {
-								"java-1.8.0-openjdk" : [],
-								"mysql": [],
-								"tomcat8": [],
-								"tomcat8-webapps": [],
-								"tomcat8-docs-webapp": [],
-								"tomcat8-admin-webapps": [],
 								"newrelic-sysmond": [],
 								"rsyslog": []
 							}
@@ -167,7 +165,9 @@
 								"source": { "Fn::Join": [ "", [
 									"https://s3-",
 									{"Ref": "ScriptRegion"},
-									".amazonaws.com/cfnstore/",
+									".amazonaws.com/",
+									{ "Ref": "CfnBaseName" },
+									"/",
 									{ "Ref": "CfnBucketName" },
 									"/",
 									{ "Ref": "StackRelease"},
@@ -183,7 +183,9 @@
 								"source": { "Fn::Join": [ "", [
 									"https://s3-",
 									{"Ref": "ScriptRegion"},
-									".amazonaws.com/cfnstore/",
+									".amazonaws.com/",
+									{ "Ref": "CfnBaseName" },
+									"/",
 									{ "Ref": "CfnBucketName" },
 									"/",
 									{ "Ref": "StackRelease"},
@@ -199,7 +201,9 @@
 								"source": { "Fn::Join": [ "", [
 									"https://s3-",
 									{"Ref": "ScriptRegion"},
-									".amazonaws.com/cfnstore/",
+									".amazonaws.com/",
+									{ "Ref": "CfnBaseName" },
+									"/",
 									{ "Ref": "CfnBucketName" },
 									"/",
 									{ "Ref": "StackRelease"},
@@ -215,7 +219,9 @@
 								"source": { "Fn::Join": [ "", [
 									"https://s3-",
 									{"Ref": "ScriptRegion"},
-									".amazonaws.com/cfnstore/",
+									".amazonaws.com/",
+									{ "Ref": "CfnBaseName" },
+									"/",
 									{ "Ref": "CfnBucketName" },
 									"/",
 									{ "Ref": "StackRelease"},
@@ -234,7 +240,9 @@
 								"source": { "Fn::Join": [ "", [
 									"https://s3-",
 									{"Ref": "ScriptRegion"},
-									".amazonaws.com/cfnstore/",
+									".amazonaws.com/",
+									{ "Ref": "CfnBaseName" },
+									"/",
 									{ "Ref": "CfnBucketName" },
 									"/",
 									{ "Ref": "StackRelease"},
@@ -279,7 +287,9 @@
 								"source": { "Fn::Join": [ "", [
 									"https://s3-",
 									{"Ref": "ScriptRegion"},
-									".amazonaws.com/cfnstore/",
+									".amazonaws.com/",
+									{ "Ref": "CfnBaseName" },
+									"/",
 									{ "Ref": "CfnBucketName" },
 									"/",
 									{ "Ref": "StackRelease"},
@@ -295,7 +305,9 @@
 								"source": { "Fn::Join": [ "", [
 									"https://s3-",
 									{"Ref": "ScriptRegion"},
-									".amazonaws.com/cfnstore/",
+									".amazonaws.com/",
+									{ "Ref": "CfnBaseName" },
+									"/",
 									{ "Ref": "CfnBucketName" },
 									"/",
 									{ "Ref": "StackRelease"},
