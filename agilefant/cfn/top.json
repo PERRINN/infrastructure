@@ -12,6 +12,10 @@
 			"Type": "String",
 			"Default": "27.99.1.206/32"
 		},
+		"CfnBaseName": {
+			"Type": "String",
+			"Default": "perrincfn"
+		},
 		"CfnBucketName": {
 			"Type": "String",
 			"Default": "agilefant"
@@ -144,7 +148,7 @@
 		"SECURITY": {
 			"Type": "AWS::CloudFormation::Stack",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/cfnstore/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/security.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/security.json"] ] },
 				"Parameters": {
 					"AdminCIDR": { "Ref": "AdminCIDR" },
 					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] }
@@ -156,7 +160,7 @@
 			"Condition": "DatabaseCond",
 			"Type": "AWS::CloudFormation::Stack",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/cfnstore/", { "Ref": "CfnBucketName" }, "/",  { "Ref": "StackRelease" }, "/database.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/database.json"] ] },
 				"Parameters": {
 					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] },
 					"DatabaseName": { "Ref": "DatabaseName"},
@@ -176,7 +180,7 @@
 		"IAM": {
 			"Type": "AWS::CloudFormation::Stack",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/cfnstore/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/iam.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/iam.json"] ] },
 				"Parameters": {
 					"CfnBucketName": { "Ref": "CfnBucketName"}
 				}
@@ -186,7 +190,7 @@
 		"ELB": {
 			"Type": "AWS::CloudFormation::Stack",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/cfnstore/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/elb.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/elb.json"] ] },
 				"Parameters": {
 					"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },
 					"SecurityGroup": {"Fn::GetAtt": [ "SECURITY","Outputs.WebSecurityGroup"]},
@@ -199,10 +203,11 @@
 			"Type": "AWS::CloudFormation::Stack",
 			"Condition": "TestCond",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/cfnstore/", { "Ref": "CfnBucketName" }, "/",  { "Ref": "StackRelease" }, "/linux.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/linux.json"] ] },
 				"Parameters": {
 					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] },
 					"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },
+					"CfnBaseName": { "Ref": "CfnBaseName"},
 					"CfnBucketName": { "Ref": "CfnBucketName"},
 					"StackRelease": { "Ref": "StackRelease"},
 					"WebServerAmi": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "linux" ] },
@@ -228,7 +233,7 @@
 			"Type": "AWS::CloudFormation::Stack",
 			"Condition": "ProdCond",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/cfnstore/", { "Ref": "CfnBucketName" }, "/",  { "Ref": "StackRelease" }, "/web.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/web.json"] ] },
 				"Parameters": {
 					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] },
 					"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },

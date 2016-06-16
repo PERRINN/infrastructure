@@ -1,5 +1,8 @@
 #!/bin/bash
 #
+# If you deploy OUTSIDE ap-southeast-2, you
+# need to change the ami ID
+#
 packer -version || true
 
 AWS_REGIONNAME="ap-southeast-2"
@@ -9,7 +12,7 @@ uuid=$(date +"%s")
 ver="0.1.0"
 build="1"
 stamp=`date -u +"%Y-%m-%dT%H-%M-%SZ"`
-#echo ${stamp}
+
 if [ -f ami-id ]
 then
 	rm ami-id
@@ -29,8 +32,8 @@ packer build \
 	-var "aws_source_ami=ami-75e5cb16" \
 	-var "aws_instance_type=t2.small" \
 	-var "aws_instance_profile=packer-linux" \
-	-var "aws_vpc_id=vpc-7e9de01b" \
-	-var "aws_subnet_id=subnet-8df9b6fa" \
+	-var "aws_vpc_id=vpc-7" \
+	-var "aws_subnet_id=subnet-8" \
 	-var "aws_region=ap-southeast-2" \
 	agilefant-base.json
 #
