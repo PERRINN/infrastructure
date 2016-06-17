@@ -9,3 +9,4 @@ sudo yum update -y
 sudo chkconfig tomcat8 off
 sudo chkconfig newrelic-sysmond off
 sudo chkconfig rsyslog off
+
