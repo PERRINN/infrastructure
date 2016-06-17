@@ -8,6 +8,10 @@
 			"Type": "String",
 			"Default": "us-west-2"
 		},
+		"CfnBaseName": {
+			"Type": "String",
+			"Default": "perrinncfn"
+		},
 		"CfnBucketName": {
 			"Type": "String"
 		},
@@ -167,7 +171,9 @@
 								"source": { "Fn::Join": [ "", [
 									"https://s3-",
 									{"Ref": "ScriptRegion"},
-									".amazonaws.com/perrincfnstore/",
+									".amazonaws.com/",
+									{ "Ref": "CfnBaseName" },
+									"/",
 									{ "Ref": "CfnBucketName" },
 									"/",
 									{ "Ref": "StackRelease"},

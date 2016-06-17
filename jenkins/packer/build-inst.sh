@@ -1,5 +1,6 @@
 #!/bin/bash
 #
+sudo yum update -y aws-cfn-bootstrap
 sudo yum update -y
 sudo rpm -i /tmp/jdk.rpm
 sudo mkdir /opt/apache

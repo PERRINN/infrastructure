@@ -1,0 +1,34 @@
+{
+	"variables": {
+		"aws_ami": "ami-0c95b86f",
+		"aws_instance_type": "t2.micro",
+		"aws_region": "ap-southeast-2",
+		"aws_user_name": "ec2-user",
+		"build_stamp": ""
+	},
+
+	"builders": [
+		{
+			"ami_name": "{{ user `soe_version` }}-{{ user `build_number` }}-platform-soe-{{ user `build_stamp` }}",
+			"instance_type": "{{ user `aws_instance_type` }}",
+			"region": "{{ user `aws_region` }}",
+			"source_ami": "{{ user `aws_ami` }}",
+			"ssh_username": "{{ user `aws_user_name` }}",
+			"tags": {
+				"BuildNumber": "{{user `build_number`}}",
+				"BuildUUID": "{{user `build_uuid`}}",
+				"BuildStamp": "{{user `build_stamp`}}"
+            		},
+			"type": "amazon-ebs"
+
+		}
+	],
+
+	"provisioners": [
+		{
+			"type": "shell",
+			"script": "build-inst.sh"
+		}
+	]
+}
+
