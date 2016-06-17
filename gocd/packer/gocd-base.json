@@ -1,0 +1,50 @@
+{
+	"variables": {
+		"aws_access_key": "",
+		"aws_secret_key": "",
+		"aws_ami": "",
+		"aws_region": "",
+		"aws_inst_type": "t2.micro",
+		"binary_location": "/tmp"
+	},
+	"builders": [{
+		"type": "amazon-ebs",
+		"region": "{{user `aws_region`}}",
+		"source_ami": "{{user `aws_ami`}}",
+		"instance_type": "{{user `aws_inst_type`}}",
+		"ssh_username": "ec2-user",
+		"ami_name": "jenkins {{timestamp}}",
+		"tags": {
+			"BuildNumber": "{{ user `build_number`}}",
+			"BuildUUID": "{{ user `build_uuid`}}"
+		}
+	}],
+	"provisioners": [
+		{
+			"type": "file",
+			"source": "{{user `binary_location`}}/jdk-8u91-linux-x64.rpm",
+			"destination": "/tmp/jdk.rpm"
+		},
+		{
+			"type": "file",
+			"source": "{{user `binary_location`}}/apache-maven-3.3.9-bin.tar.gz",
+			"destination": "/tmp/apache-maven.tar.gz"
+		},
+		{
+			"type": "file",
+			"source": "{{user `binary_location}}/gocd.repo",
+			"destination": "/tmp/gocd.repo" 
+		},
+		{
+			"type": "file",
+			"source": "{{user `binary_location`}}/packer_0.10.1_linux_amd64.zip",
+			"destination": "/tmp/packer.zip"
+		},
+		{
+			"fype": "script",
+			"script": "build.inst"
+		}
+		
+	]
+}
+
