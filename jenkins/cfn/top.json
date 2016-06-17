@@ -1,12 +1,16 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
 
-	"Description": "JENKINS 1.0.1 - Author Chris Moran",
+	"Description": "JENKINS 1.0.2 - Author Chris Moran",
 
 	"Parameters": {
 		"ScriptRegion": {
 			"Type": "String",
 			"Default": "ap-southeast-2"
+		},
+		"CfnBaseName": {
+			"Type": "String",
+			"Default": "perrinncfn"
 		},
 		"CfnBucketName": {
 			"Type": "String"
@@ -100,7 +104,7 @@
 		"SECURITY": {
 			"Type": "AWS::CloudFormation::Stack",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/perrincfnstore/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/security.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/security.json"] ] },
 				"Parameters": {
 					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] }
 				}
@@ -110,7 +114,7 @@
 		"IAM": {
 			"Type": "AWS::CloudFormation::Stack",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/perrincfnstore/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/iam.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/iam.json"] ] },
 				"Parameters": {
 					"CfnBucketName": { "Ref": "CfnBucketName"}
 				}
@@ -120,10 +124,11 @@
 		"DEVLINUX": {
 			"Type": "AWS::CloudFormation::Stack",
 			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/perrincfnstore/", { "Ref": "CfnBucketName" }, "/",  { "Ref": "StackRelease" }, "/linux.json"] ] },
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/linux.json"] ] },
 				"Parameters": {
 					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] },
 					"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },
+					"CfnBaseName": { "Ref": "CfnBaseName"},
 					"CfnBucketName": { "Ref": "CfnBucketName"},
 					"StackRelease": { "Ref": "StackRelease"},
 					"WebServerAmi": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "linux" ] },
@@ -136,28 +141,6 @@
 					"ScriptRegion": { "Ref": "ScriptRegion"},
 					"BucketProfile": { "Fn::GetAtt": [ "IAM", "Outputs.BucketProfile"] },
 					"InstanceRole" : { "Fn::GetAtt": [ "IAM", "Outputs.InstanceRole"] }
-				}
-			}
-		},
-		"WEB": {
-			"Type": "AWS::CloudFormation::Stack",
-			"Condition": "ProdCond",
-			"Properties": {
-				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/perrincfnstore/", { "Ref": "CfnBucketName" }, "/",  { "Ref": "StackRelease" }, "/linux.json"] ] },
-				"Parameters": {
-					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] },
-					"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },
-					"CfnBucketName": { "Ref": "CfnBucketName"},
-					"StackRelease": { "Ref": "StackRelease"},
-					"WebServerAmi": { "Ref": "LinuxWebServerAmi" },
-					"KeyName": { "Ref": "KeyName" },
-					"NewRelicKey": { "Ref": "NewRelicKey" },
-					"LogglyKey": { "Ref": "LogglyKey" },
-					"LogglyHost": { "Ref": "LogglyHost" },
-					"DnsDomain":  { "Fn::If": ["ProdCond",
-						"oordas.net",
-						{ "Ref": "DnsDomain"}
-					] }
 				}
 			}
 		},
