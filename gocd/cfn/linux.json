@@ -170,7 +170,6 @@
 						},
 						"services": {
 							"sysvinit": { "enabled": "true", "ensurerunning": "true" },
-							"tomcat8": { "enabled": "true", "ensurerunning": "true" },
 							"newrelic-sysmond": { "enabled": "true", "ensurerunning": "true" },
 							"rsyslog": { "enabled": "true", "ensurerunning": "true" },
 							"cfn-hup": { "enabled": "true", "ensurerunning": "true" },
