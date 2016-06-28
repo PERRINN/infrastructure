@@ -6,7 +6,7 @@
 	"Parameters": {
 		"AWSRegion": {
 			"Type": "String",
-			"Default": "us-west-2"
+			"Default": "us-east-1"
 		},
 		"CfnBaseName": {
 			"Type": "String",
