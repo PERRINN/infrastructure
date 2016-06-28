@@ -22,7 +22,7 @@
 	"provisioners": [
 		{
 			"type": "file",
-			"source": "{{user `binary_location`}}/jdk-8u91-linux-x64.rpm",
+			"source": "{{user `binary_location`}}/jdk-8u92-linux-x64.rpm",
 			"destination": "/tmp/jdk.rpm"
 		},
 		{
@@ -32,7 +32,7 @@
 		},
 		{
 			"type": "file",
-			"source": "{{user `binary_location}}/jenkins-1.651.2-1.1.noarch.rpm",
+			"source": "{{user `binary_location}}/jenkins-1.651.3-1.1.noarch.rpm",
 			"destination": "/tmp/jenkins.rpm" 
 		},
 		{
