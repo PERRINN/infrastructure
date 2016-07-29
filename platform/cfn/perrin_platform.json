@@ -1,0 +1,268 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+
+	"Description": "PLATFORM 1.0.0 - Author Chris Moran",
+
+	"Parameters": {
+		"script_region": {
+			"Type": "String",
+			"Default": "ap-southeast-2"
+		},
+		"admin_cidr": {
+			"Type": "String",
+			"Default": "27.99.1.206/32"
+		},
+		"cfn_base_name": {
+			"Type": "String",
+			"Default": "perrinncfn"
+		},
+		"cfn_bucket_name": {
+			"Type": "String",
+			"Default": "platform"
+		},
+		"database": {
+			"Type": "String",
+			"Default": ""
+		},
+		"database_instance_class": {
+			"Type": "String",
+			"Default": "db.t2.micro"
+		},
+		"database_name": {
+			"Type": "String",
+			"Default": "platform"
+		},
+		"database_password": {
+			"Type": "String",
+			"NoEcho": true,
+			"Default": "CHANGEME"
+		},
+		"database_storage": {
+			"Type": "String",
+			"Default": "5"
+		},
+		"database_user": {
+			"Type": "String",
+			"Default": "MUSTCHANGEME"
+		},
+		"database_snapshot": {
+			"Type": "String",
+			"Default": ""
+		},
+		"dns_domain": {
+			"Type": "String",
+			"Default": ""
+		},
+		"dns_id": {
+			"Type": "String",
+			"Default": ""
+		},
+		"environment": {
+			"Type": "String",
+			"Default": "test"
+		},
+		"key_name": {
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"Default": "CHANGEME"
+		},
+		"loggly_key": {
+			"Type": "String",
+			"AllowedPattern": ".+",
+			"Default": "LOGGLY_KEY"
+		},
+		"new_relic_key": {
+			"Type": "String",
+			"AllowedPattern": ".+",
+			"Default": "NR_KEY"
+		},
+		"app_server_ami": {
+			"Type": "String",
+			"AllowedPattern": "ami-[a-f0-9]+",
+			"Default": "ami-3cf2db5f"
+		},
+		"web_server_instance_type": {
+			"Type": "String",
+			"Default": "t2.micro"
+		},
+		"loggly_host": {
+			"Type": "String",
+			"AllowedPattern": ".+",
+			"Default": "logs-01.loggly.com:514"
+		},
+		"desired_units": {
+			"Type": "String",
+			"Default": "1"
+		},
+		"max_units": {
+			"Type": "String",
+			"Default": "1"
+		},
+		"min_units": {
+			"Type": "String",
+			"Default": "1"
+		},
+		"vpc_id":
+		{
+			"Type": "String"
+		}
+	},
+
+	"Conditions": {
+		"database_cond": {
+			 "Fn::Equals": [ { "Ref": "database" }, "" ] 
+		},
+		"prod_cond": {
+			 "Fn::Equals": [ { "Ref": "environment" }, "prod" ] 
+		},
+		"test_cond": {
+			 "Fn::Equals": [ { "Ref": "environment" }, "test" ] 
+		},
+		"database_ss_cond": {
+			 "Fn::Equals": [ { "Ref": "database_snapshot" }, "" ]
+		}
+	},
+	
+	"Mappings": {
+	},
+
+	"Resources": {
+		"app_server_security": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupDescription" : "Server Access Security",
+				"SecurityGroupIngress": [
+					{ "CidrIp": { "Ref": "admin_cidr" }, "IpProtocol": "tcp", "FromPort": "22", "ToPort": "22" },
+					{ "SourceSecurityGroupId": { "Fn::GetAtt": [ "web_security_group","GroupId"]}, "IpProtocol": "tcp", "FromPort": "8080", "ToPort": "8080" }
+				],
+				"VpcId": { "Ref": "VPC" }
+			}
+		},
+
+		"web_security_group": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupDescription" : "Web Access Security",
+				"SecurityGroupIngress": [
+					{ "CidrIp": "0.0.0.0/0", "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80" }
+				],
+				"VpcId": { "Ref": "vpc_id" }
+			}
+		},
+
+		"database_security_group": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupDescription" : "Database Security",
+				"SecurityGroupIngress": [
+					{ "SourceSecurityGroupId": { "Fn::GetAtt": [ "app_server_security","GroupId"]}, "IpProtocol": "tcp", "FromPort": "3306", "ToPort": "3306" }
+				],
+				"VpcId": { "Ref": "VPC" }
+			}
+		},
+		
+		"database_host": {
+			"Condition": "database_cond",
+			"Type": "AWS::RDS::DBInstance",
+			"Properties": {
+				"Engine": "MySQL",
+				"DBName": {
+					"Fn::If": [
+						"database_ss_cond",
+						{ "Ref": "database_name" },
+						""
+					]
+				},
+				"DBSnapshotIdentifier": {
+					"Fn::If": [
+							"database_ss_cond",
+							"",
+							{ "Ref": "database_snapshot"}
+						]
+				},
+				"AllocatedStorage": { "Ref": "database_storage" },
+				"DBInstanceClass": { "Ref": "database_instance_class" },
+				"MasterUsername": { "Ref": "database_user" },
+				"MasterUserPassword": { "Ref": "database_password" },
+				"Port": "3306",
+				"PubliclyAccessible": "true",
+				"MultiAZ": "true",
+				"VPCSecurityGroups": [
+					{ "Ref": "database_security_group" }
+				]
+			}
+		},
+
+		"IAM": {
+			"Type": "AWS::CloudFormation::Stack",
+			"Properties": {
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/iam.json"] ] },
+				"Parameters": {
+					"CfnBucketName": { "Ref": "CfnBucketName"}
+				}
+			}
+		},
+
+		"ELB": {
+			"Type": "AWS::CloudFormation::Stack",
+			"Properties": {
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/elb.json"] ] },
+				"Parameters": {
+					"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },
+					"SecurityGroup": {"Fn::GetAtt": [ "SECURITY","Outputs.WebSecurityGroup"]},
+					"DnsDomain": { "Ref": "DnsDomain"}
+				}
+			}
+		},
+
+		"LINUX": {
+			"Type": "AWS::CloudFormation::Stack",
+			"Properties": {
+				"TemplateURL": { "Fn::Join" : [ "", ["https://s3-", {"Ref": "ScriptRegion"}, ".amazonaws.com/", { "Ref": "CfnBaseName" }, "/", { "Ref": "CfnBucketName" }, "/", { "Ref": "StackRelease" }, "/linux.json"] ] },
+				"Parameters": {
+					"VPC": { "Fn::FindInMap": [ "VpcMap", { "Ref": "AWS::Region" }, "vpc" ] },
+					"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },
+					"CfnBaseName": { "Ref": "CfnBaseName"},
+					"CfnBucketName": { "Ref": "CfnBucketName"},
+					"StackRelease": { "Ref": "StackRelease"},
+					"WebServerAmi": { "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "linux" ] },
+					"KeyName": { "Ref": "KeyName" },
+					"NewRelicKey": { "Ref": "NewRelicKey" },
+					"LogglyKey": { "Ref": "LogglyKey" },
+					"LogglyHost": { "Ref": "LogglyHost" },
+					"DnsDomain": { "Ref": "DnsDomain"},
+					"DevLSecurityGroup": { "Fn::GetAtt": ["SECURITY","Outputs.LinuxSecurityGroup"] },
+					"ScriptRegion": { "Ref": "ScriptRegion"},
+					"DatabaseHost": { "Fn::If": [ "DatabaseCond", { "Fn::GetAtt": [ "SQL","Outputs.DatabaseEndpoint" ] }, { "Ref": "Database" } ] },
+					"DatabasePort": { "Fn::If": [ "DatabaseCond", { "Fn::GetAtt": [ "SQL","Outputs.DatabasePort" ] }, "3306" ] },
+					"DatabaseName": { "Ref": "DatabaseName"},
+					"DatabasePassword": { "Ref": "DatabasePassword"},
+					"DatabaseUser": { "Ref": "DatabaseUser" },
+					"BucketProfile": { "Fn::GetAtt": [ "IAM", "Outputs.BucketProfile"] },
+					"InstanceRole" : { "Fn::GetAtt": [ "IAM", "Outputs.InstanceRole"] },
+				}
+			}
+		},
+		"ASG": {
+			"Type": "AWS::CloudFormation::Stack",
+			"Properties": {
+				"DesiredUnits": { "Ref": "DesiredUnits"},
+				"MaxUnits": { "Ref": "MaxUnits"},
+				"MinUnits": { "Ref": "MinUnits"},
+				"ElbId": { "Fn::GetAtt": ["ELB", "Outputs.ElbId"]},
+				"SubnetList": { "Fn::FindInMap": [ "SubnetMap", { "Ref": "AWS::Region" }, "subnet" ] },
+				"WebLaunchConfig": { "Fn::GetAtt": [ "LINUX", "Outputs.launchconfig"] }
+			}
+		},
+		"Buckets": {
+			"Type": "AWS::S3::Bucket",
+			"DeletionPolicy": "Delete",
+			"Properties": {
+							"BucketName": { "Fn::Join" : [ "-", [{ "Ref": "CfnBucketName" }, { "Ref": "StackRelease" } ] ] }
+			}
+		}
+	},
+
+	"Outputs": {
+	}
+
+}
