@@ -1,2 +1,4 @@
+bake-local.sh
+ami-local.json
 cm-build.sh
 bin/*

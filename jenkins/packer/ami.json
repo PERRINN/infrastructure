@@ -1,0 +1,49 @@
+{
+	"variables": {
+		"aws_ami": "ami-6869aa05",
+		"aws_instance_type": "t2.small",
+		"aws_region": "ap-southeast-2",
+		"aws_user_name": "ec2-user",
+		"binary_location": "/tmp",
+        "aws_vpc": "",
+        "aws_subnet": "",
+		"aws_az": "{{ user `aws_instance_type` }}b",
+        "version": "1",
+        "build": "0",
+		"ami_name": ""
+	},
+
+	"builders": [
+		{
+			"ami_name": "{{user `ami_name`}}",
+			"instance_type": "{{ user `aws_instance_type` }}",
+			"region": "{{ user `aws_region` }}",
+			"availability_zone": "{{user `aws_az`}}",			
+			"source_ami": "{{ user `aws_ami` }}",
+			"ssh_username": "{{ user `aws_user_name` }}",
+            "ssh_timeout": "5m",
+			"tags": {
+				"BuildNumber": "{{user `build_number`}}",
+				"BuildUUID": "{{user `build_uuid`}}"
+            },
+            "associate_public_ip_address" : false,
+			"type": "amazon-ebs",
+            "vpc_id": "{{user `vpc_id`}}",
+            "subnet_id": "{{user `subnet_id`}}"
+
+		}
+	],
+
+	"provisioners": [
+		{
+			"type": "file",
+			"source": "bin/newrelic-java-3.32.0.zip",
+			"destination": "/tmp/newrelic-java.zip"
+		},
+
+		{
+			"type": "shell",
+			"script": "scripts/bootstrap.sh"
+		}
+	]
+}
