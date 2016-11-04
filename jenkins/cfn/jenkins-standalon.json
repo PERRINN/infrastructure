@@ -1,0 +1,446 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Jenkins Full Stack",
+  "Parameters": {
+    "AccessCidr": {
+      "Type": "String",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x.",
+      "Description": "IP Range or Address allowed access to the instance",
+      "MaxLength": "18",
+      "MinLength": "9"
+    },
+    "AccessSecurityGroup": {
+      "Type": "String",
+      "Description": "Security Group ID for existing Access Control Group"
+    },
+    "AccessSubnet": {
+      "Type": "String",
+      "AllowedPattern": "subnet-[a-z0-9]{8}",
+      "ConstraintDescription": "Must be a valid subnet ID",
+      "Description": "Subnet for the Access (Public) interface",
+      "MaxLength": "15",
+      "MinLength": "15"
+    },
+    "AdminCidr": {
+      "Type": "String",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x.",
+      "Description": "IP Range or Address allowed administrative access to the instance",
+      "MaxLength": "18",
+      "MinLength": "9"
+    },
+    "AdminSecurityGroup": {
+      "Type": "String",
+      "Description": "Security Group ID for existing Access Control Group"
+    },
+    "AdminSubnet": {
+      "Type": "String",
+      "AllowedPattern": "subnet-[a-z0-9]{8}",
+      "ConstraintDescription": "Must be a valid subnet ID",
+      "Description": "Subnet for the Admin interface",
+      "MaxLength": "15",
+      "MinLength": "15"
+    },
+    "ServerAmi": {
+      "Type": "String",
+      "AllowedPattern": "ami-[a-z0-9]{8}",
+      "MaxLength": "12",
+      "MinLength": "12",
+      "Default": "ami-5180a746"
+    },
+    "InstanceType": {
+      "Type": "String",
+      "Description": "Instance Size for this machine",
+      "Default": "t2.small"
+    },
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription": "Must be a valid, existing Key Pair"
+    },
+    "VpcId": {
+      "Type": "String",
+      "AllowedPattern": "vpc-[a-z0-9]{8}",
+      "ConstraintDescription": "Must be a valid, existing VPC",
+      "MaxLength": "12",
+      "MinLength": "12"
+    },
+    "ZoneName": {
+      "Type": "String",
+      "MinLength": "4",
+      "Default": "oordas.net"
+    }
+  },
+  "Conditions": {
+    "AccessSecCond": {
+      "Fn::Equals": [
+        {
+          "Ref": "AccessSecurityGroup"
+        },
+        ""
+      ]
+    },
+    "AdminSecCond": {
+      "Fn::Equals": [
+        {
+          "Ref": "AdminSecurityGroup"
+        },
+        ""
+      ]
+    }
+  },
+  "Resources": {
+    "AdminSecurity": {
+      "Condition": "AdminSecCond",
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Access to management port on Jenkins Host",
+        "VpcId": {
+          "Ref": "VpcId"
+        },
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Ref": "AdminCidr"
+            },
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22"
+          }
+        ]
+      }
+    },
+    "AccessSecurity": {
+      "Condition": "AccessSecCond",
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Access to inbount port(s) on Jenkins Host",
+        "VpcId": {
+          "Ref": "VpcId"
+        },
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Ref": "AccessCidr"
+            },
+            "IpProtocol": "tcp",
+            "FromPort": "8080",
+            "ToPort": "8080"
+          },
+          {
+            "CidrIp": {
+              "Ref": "AccessCidr"
+            },
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443"
+          }
+        ]
+      }
+    },
+    "InstanceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "S3Download",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+                "s3:GetObject",
+                "s3:PutObject"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "ec2:AttachNetworkInterface",
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DetachNetworkInterface",
+                "ec2:DescribeNetworkInterfaceAttribute"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "InstanceRole"
+          }
+        ]
+      }
+    },
+    "BucketProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "InstanceRole"
+          }
+        ]
+      }
+    },
+    "JenkinsServer": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "IamInstanceProfile": {
+          "Ref": "BucketProfile"
+        },
+        "ImageId": {
+          "Ref": "ServerAmi"
+        },
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": true,
+            "DeviceIndex": "0",
+            "GroupSet": [
+              {
+                "Fn::If": [
+                  "AdminSecCond",
+                  {
+                    "Ref": "AdminSecurity"
+                  },
+                  {
+                    "Ref": "AdminSecurityGroup"
+                  }
+                ]
+              },
+              {
+                "Fn::If": [
+                  "AccessSecCond",
+                  {
+                    "Ref": "AccessSecurity"
+                  },
+                  {
+                    "Ref": "AccessSecurityGroup"
+                  }
+                ]
+              }
+            ],
+            "SubnetId": {
+              "Ref": "AdminSubnet"
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -v\n",
+                "#\n",
+                "yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource JenkinsServer --configsets InstallAndRun --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Authentication": {
+          "S3AccessCreds": {
+            "type": "S3",
+            "roleName": {
+              "Ref": "InstanceRole"
+            }
+          }
+        },
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "packages": {
+              "yum": {
+              }
+            },
+            "files": {
+              "/etc/cfn/cfn-hup.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[main]\n",
+                      "stack = ",
+                      {
+                        "Ref": "AWS::StackId"
+                      },
+                      "\n",
+                      "region = ",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "0644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/cfn/cfn-auto-reloader.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[cfn-auto-reloader-hook]\n",
+                      "triggers=post.update\n",
+                      "path=Resources.JenkinsServer.Metadata.AWS::CloudFormation::Init\n",
+                      "action=/opt/aws/bin/cfn-init -v --stack ",
+                      {
+                        "Ref": "AWS::StackName"
+                      },
+                      " --resource JenkinsServer --configsets InstallAndRun --region ",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "\n",
+                      "runas=root\n",
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "0644",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+            "services": {
+              "sysvinit": {
+                "enabled": true,
+                "ensurerunning": true
+              },
+              "cfn-hup": {
+                "enabled": true,
+                "ensurerunning": true,
+                "files": [
+                  "/etc/cfn/cfn-hup.conf",
+                  "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                ]
+              },
+              "tomcat8": {
+                "enabled": true,
+                "ensurerunning": true,
+                "files": [
+                  "/etc/tomcat8/tomcat8.conf"
+                ]
+              },
+              "newrelic-sysmond": {
+                "enabled": true,
+                "ensurerunning": true,
+                "files": [
+                  "/etc/newrelic/nrsysmond.cfg"
+                ]
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "10_start_newrelic": {
+                "command": "/etc/init.d/newrelic-sysmond start"
+              },
+              "99_start_tomcat": {
+                "command": "service tomcat8 restart"
+              }
+            }
+          }
+        }
+      }
+    },
+    "DnsEntry": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneName": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "ZoneName"
+              },
+              "."
+            ]
+          ]
+        },
+        "Comment": "Continuous Integration Service",
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "jenkins",
+              ".",
+              {
+                "Ref": "ZoneName"
+              },
+              "."
+            ]
+          ]
+        },
+        "Type": "A",
+        "TTL": "600",
+        "ResourceRecords": [
+          {
+            "Fn::GetAtt": [
+              "JenkinsServer",
+              "PublicIp"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
