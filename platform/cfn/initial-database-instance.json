@@ -12,7 +12,7 @@
 		"DatabaseName": {
 			"Type": "String",
 			"AllowedPattern": ".+",
-			"Default": "platform"
+			"Default": "PERRINNAPP"
 		},
 		"DatabaseStorage": {
 			"Type": "String",
@@ -32,25 +32,6 @@
 		},
 		"DatabaseSecurityGroup": {
 			"Type": "String"
-		},
-		"DatabaseSnapshot": {
-			"Type": "String",
-			"Default": ""
-		},
-		"DnsId": {
-			"Type": "String"
-		},
-		"DnsDomain": {
-			"Type": "String"
-		},
-		"MultiAZ": {
-			"Type": "String"
-		}
-	},
-
-	"Conditions": {
-		"DatabaseSSCond": {
-			 "Fn::Equals": [ { "Ref": "DatabaseSnapshot" }, "" ] 
 		}
 	},
 
@@ -59,52 +40,25 @@
 			"Type": "AWS::RDS::DBInstance",
 			"Properties": {
 				"Engine": "MySQL",
-				"DBName": {
-					"Fn::If": [
-						"DatabaseSSCond",
-						{ "Ref": "DatabaseName" },
-						""
-					]
-				},
-				"DBSnapshotIdentifier": {
-					"Fn::If": [
-							"DatabaseSSCond",
-							"",
-							{ "Ref": "DatabaseSnapshot"}
-						]
-				},
+				"DBName": { "Ref": "DatabaseName" },
 				"AllocatedStorage": { "Ref": "DatabaseStorage" },
 				"DBInstanceClass": { "Ref": "DatabaseInstanceClass" },
 				"MasterUsername": { "Ref": "DatabaseUser" },
 				"MasterUserPassword": { "Ref": "DatabasePassword" },
 				"Port": "3306",
 				"PubliclyAccessible": "true",
-				"MultiAZ": { "Ref": "MultiAZ" },
+				"MultiAZ": "false",
 				"VPCSecurityGroups": [
 					{ "Ref": "DatabaseSecurityGroup" }
-				]
-			}
-		},
-		"DatabaseAlias": {
-			"Type": "AWS::Route53::RecordSet",
-			"Properties": {
-				"HostedZoneId": { "Ref": "DnsId"},
-				"Name": {
-					"Fn::Join" : [ ".", [
-						"afdb",
-						{ "Ref": "DnsDomain"}
-					] ]
-				},
-				"Type": "CNAME",
-				"TTL": "900",
-				"ResourceRecords": [
-					{ "Fn::GetAtt": [ "Database", "Endpoint.Address"] }
 				]
 			}
 		}
 	},
 
 	"Outputs": {
+		"DatabaseId": {
+			"Value": { "Ref": "Database" }
+		},
 		"DatabaseEndpoint": {
 			"Value": { "Fn::GetAtt": ["Database","Endpoint.Address"] }
 		},
