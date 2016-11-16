@@ -22,7 +22,7 @@ sudo rm /tmp/apache-maven-3.3.9-bin.tar.gz
 sudo service tomcat8 stop
 sudo rm -rf /var/lib/tomcat8/webapps/ROOT
 sudo mv /tmp/ROOT.war /var/lib/tomcat8/webapps
-wget -O /tmp/android-sdk.tar.gz https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
+    wget -O /tmp/android-sdk.tar.gz https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
 # We will run out of space in the build if we do this
 #sudo tar -xf /tmp/android-sdk.tar.gz -C /opt
 sudo rm /tmp/android-sdk.tar.gz

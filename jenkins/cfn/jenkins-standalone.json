@@ -20,7 +20,8 @@
       "ConstraintDescription": "Must be a valid subnet ID",
       "Description": "Subnet for the Access (Public) interface",
       "MaxLength": "15",
-      "MinLength": "15"
+      "MinLength": "15",
+      "Default": "subnet-e96a25c1"
     },
     "AdminCidr": {
       "Type": "String",
@@ -28,7 +29,8 @@
       "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x.",
       "Description": "IP Range or Address allowed administrative access to the instance",
       "MaxLength": "18",
-      "MinLength": "9"
+      "MinLength": "9",
+      "Default": "1.129.96.248/32"
     },
     "AdminSecurityGroup": {
       "Type": "String",
@@ -40,35 +42,45 @@
       "ConstraintDescription": "Must be a valid subnet ID",
       "Description": "Subnet for the Admin interface",
       "MaxLength": "15",
-      "MinLength": "15"
+      "MinLength": "15",
+      "Default": "subnet-e96a25c1"
+    },
+    "AZ": {
+      "Type": "String",
+      "Description": "Availability Zone to place instance in"
     },
     "ServerAmi": {
       "Type": "String",
       "AllowedPattern": "ami-[a-z0-9]{8}",
       "MaxLength": "12",
       "MinLength": "12",
-      "Default": "ami-5180a746"
+      "Default": "ami-fb91b9ec"
     },
     "InstanceType": {
       "Type": "String",
       "Description": "Instance Size for this machine",
-      "Default": "t2.small"
+      "Default": "t2.micro"
     },
     "KeyName": {
       "Type": "AWS::EC2::KeyPair::KeyName",
       "ConstraintDescription": "Must be a valid, existing Key Pair"
+    },
+    "NewRelicKey": {
+      "Type": "String",
+      "Default": "1234"
     },
     "VpcId": {
       "Type": "String",
       "AllowedPattern": "vpc-[a-z0-9]{8}",
       "ConstraintDescription": "Must be a valid, existing VPC",
       "MaxLength": "12",
-      "MinLength": "12"
+      "MinLength": "12",
+      "Default": "vpc-e47c9481"
     },
     "ZoneName": {
       "Type": "String",
       "MinLength": "4",
-      "Default": "oordas.net"
+      "Default": "perrinnapp.net"
     }
   },
   "Conditions": {
@@ -217,9 +229,10 @@
         ]
       }
     },
-    "JenkinsServer": {
-      "Type": "AWS::EC2::Instance",
+    "JenkinsLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
+        "AssociatePublicIpAddress": true,
         "IamInstanceProfile": {
           "Ref": "BucketProfile"
         },
@@ -232,37 +245,28 @@
         "KeyName": {
           "Ref": "KeyName"
         },
-        "NetworkInterfaces": [
+        "SecurityGroups": [
           {
-            "AssociatePublicIpAddress": true,
-            "DeviceIndex": "0",
-            "GroupSet": [
+            "Fn::If": [
+              "AdminSecCond",
               {
-                "Fn::If": [
-                  "AdminSecCond",
-                  {
-                    "Ref": "AdminSecurity"
-                  },
-                  {
-                    "Ref": "AdminSecurityGroup"
-                  }
-                ]
+                "Ref": "AdminSecurity"
               },
               {
-                "Fn::If": [
-                  "AccessSecCond",
-                  {
-                    "Ref": "AccessSecurity"
-                  },
-                  {
-                    "Ref": "AccessSecurityGroup"
-                  }
-                ]
+                "Ref": "AdminSecurityGroup"
               }
-            ],
-            "SubnetId": {
-              "Ref": "AdminSubnet"
-            }
+            ]
+          },
+          {
+            "Fn::If": [
+              "AccessSecCond",
+              {
+                "Ref": "AccessSecurity"
+              },
+              {
+                "Ref": "AccessSecurityGroup"
+              }
+            ]
           }
         ],
         "UserData": {
@@ -278,7 +282,7 @@
                 {
                   "Ref": "AWS::StackName"
                 },
-                " --resource JenkinsServer --configsets InstallAndRun --region ",
+                " --resource JenkinsLaunchConfig --configsets InstallAndRun --region ",
                 {
                   "Ref": "AWS::Region"
                 },
@@ -340,12 +344,12 @@
                     [
                       "[cfn-auto-reloader-hook]\n",
                       "triggers=post.update\n",
-                      "path=Resources.JenkinsServer.Metadata.AWS::CloudFormation::Init\n",
+                      "path=Resources.JenkinsLaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                       "action=/opt/aws/bin/cfn-init -v --stack ",
                       {
                         "Ref": "AWS::StackName"
                       },
-                      " --resource JenkinsServer --configsets InstallAndRun --region ",
+                      " --resource JenkinsLaunchConfig --configsets InstallAndRun --region ",
                       {
                         "Ref": "AWS::Region"
                       },
@@ -391,7 +395,20 @@
           },
           "Configure": {
             "commands": {
-              "10_start_newrelic": {
+              "10_conf_newrelic": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "nrsysmond-config --set license_key=",
+                      {
+                        "Ref": "NewRelicKey"
+                      }
+                    ]
+                  ]
+                }
+              },
+              "20_start_newrelic": {
                 "command": "/etc/init.d/newrelic-sysmond start"
               },
               "99_start_tomcat": {
@@ -402,44 +419,61 @@
         }
       }
     },
-    "DnsEntry": {
-      "Type": "AWS::Route53::RecordSet",
+    "JenkinsAutoScalingGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
-        "HostedZoneName": {
-          "Fn::Join": [
-            "",
-            [
-              {
-                "Ref": "ZoneName"
-              },
-              "."
-            ]
-          ]
-        },
-        "Comment": "Continuous Integration Service",
-        "Name": {
-          "Fn::Join": [
-            "",
-            [
-              "jenkins",
-              ".",
-              {
-                "Ref": "ZoneName"
-              },
-              "."
-            ]
-          ]
-        },
-        "Type": "A",
-        "TTL": "600",
-        "ResourceRecords": [
+        "AvailabilityZones": [
           {
-            "Fn::GetAtt": [
-              "JenkinsServer",
-              "PublicIp"
-            ]
+            "Ref": "AZ"
+          }
+        ],
+        "Cooldown": "600",
+        "DesiredCapacity": "1",
+        "LaunchConfigurationName": {
+          "Ref": "JenkinsLaunchConfig"
+        },
+        "MaxSize": "1",
+        "MinSize": "1",
+        "TerminationPolicies": [
+          "OldestInstance",
+          "ClosestToNextInstanceHour"
+        ],
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "AccessSubnet"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Production Jenkins Instance",
+            "PropagateAtLaunch": true
           }
         ]
+      }
+    },
+    "JenkinsStart": {
+      "Type": "AWS::AutoScaling::ScheduledAction",
+      "Properties": {
+        "AutoScalingGroupName": {
+          "Ref": "JenkinsAutoScalingGroup"
+        },
+        "DesiredCapacity": "1",
+        "MaxSize": "1",
+        "MinSize": "1",
+        "Recurrence": "45 09 * * *"
+      }
+    },
+    "JenkinsEnd": {
+      "Type": "AWS::AutoScaling::ScheduledAction",
+      "Properties": {
+        "AutoScalingGroupName": {
+          "Ref": "JenkinsAutoScalingGroup"
+        },
+        "DesiredCapacity": "1",
+        "MaxSize": "1",
+        "MinSize": "1",
+        "Recurrence": "12 00 * * *"
       }
     }
   }

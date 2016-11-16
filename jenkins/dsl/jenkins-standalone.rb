@@ -26,7 +26,8 @@ template do
         ConstraintDescription: 'Must be a valid subnet ID',
         Description: 'Subnet for the Access (Public) interface',
         MaxLength: '15',
-        MinLength: '15'
+        MinLength: '15',
+        Default: 'subnet-e96a25c1'
 
     parameter 'AdminCidr',
         Type: 'String',
@@ -34,7 +35,8 @@ template do
         ConstraintDescription: 'must be a valid IP CIDR range of the form x.x.x.x/x.',
         Description: 'IP Range or Address allowed administrative access to the instance',
         MaxLength: '18',
-        MinLength: '9'
+        MinLength: '9',
+        Default: '1.129.96.248/32'
 
     parameter 'AdminSecurityGroup',
         Type: 'String',
@@ -46,35 +48,45 @@ template do
         ConstraintDescription: 'Must be a valid subnet ID',
         Description: 'Subnet for the Admin interface',
         MaxLength: '15',
-        MinLength: '15'
+        MinLength: '15',
+        Default: 'subnet-e96a25c1'
+
+    parameter 'AZ',
+        Type: 'String',
+        Description: 'Availability Zone to place instance in'
 
     parameter 'ServerAmi',
         Type: 'String',
         AllowedPattern: 'ami-[a-z0-9]{8}',
         MaxLength: '12',
         MinLength: '12',
-        Default: 'ami-5180a746'
+        Default: 'ami-fb91b9ec'
 
     parameter 'InstanceType',
         Type: 'String',
         Description: 'Instance Size for this machine',
-        Default: 't2.small'
+        Default: 't2.micro'
 
     parameter 'KeyName',
         Type: 'AWS::EC2::KeyPair::KeyName',
         ConstraintDescription: 'Must be a valid, existing Key Pair'
+
+    parameter 'NewRelicKey',
+        Type: 'String',
+        Default: '1234'
 
     parameter 'VpcId',
         Type: 'String',
         AllowedPattern: 'vpc-[a-z0-9]{8}',
         ConstraintDescription: 'Must be a valid, existing VPC',
         MaxLength: '12',
-        MinLength: '12'
+        MinLength: '12',
+        Default: 'vpc-e47c9481'
 
     parameter 'ZoneName',
         Type: 'String',
         MinLength: '4',
-        Default: 'oordas.net'
+        Default: 'perrinnapp.net'
 
     condition 'AccessSecCond',
         equal(ref('AccessSecurityGroup'), '')
@@ -161,21 +173,15 @@ template do
         Roles: [ ref('InstanceRole') ]
     }
 
-    resource 'JenkinsServer', Type: 'AWS::EC2::Instance', Properties: {
+    resource 'JenkinsLaunchConfig', Type: 'AWS::AutoScaling::LaunchConfiguration', Properties: {
+        AssociatePublicIpAddress: true,
         IamInstanceProfile: ref('BucketProfile'),
         ImageId: ref('ServerAmi'),
         InstanceType: ref('InstanceType'),
         KeyName: ref('KeyName'),
-        NetworkInterfaces: [
-            {
-                AssociatePublicIpAddress: true,
-                DeviceIndex: '0',
-                GroupSet: [
-                    fn_if('AdminSecCond', ref('AdminSecurity'), ref('AdminSecurityGroup')),
-                    fn_if('AccessSecCond', ref('AccessSecurity'), ref('AccessSecurityGroup'))
-                ],
-                SubnetId: ref('AdminSubnet')
-            }
+        SecurityGroups: [
+            fn_if('AdminSecCond', ref('AdminSecurity'), ref('AdminSecurityGroup')),
+            fn_if('AccessSecCond', ref('AccessSecurity'), ref('AccessSecurityGroup'))
         ],
         UserData: base64(interpolate(file('scripts/userdata.sh')))
     },
@@ -212,15 +218,18 @@ template do
                     }
                 },
                 services: {
-                    sysvinit: { enabled: true, ensurerunning: true },
+                    'sysvinit': { enabled: true, ensurerunning: true },
                     'cfn-hup': { enabled: true, ensurerunning: true, files: [ '/etc/cfn/cfn-hup.conf', '/etc/cfn/hooks.d/cfn-auto-reloader.conf' ] },
-                    tomcat8: { enabled: true, ensurerunning: true, files: [ '/etc/tomcat8/tomcat8.conf' ] },
-                    'newrelic-sysmond': { enabled: true, ensurerunning: true, files: [ '/etc/newrelic/nrsysmond.cfg' ] } 
+                    'tomcat8': { enabled: true, ensurerunning: true, files: [ '/etc/tomcat8/tomcat8.conf' ] },
+                    'newrelic-sysmond': { enabled: true, ensurerunning: true, files: [ '/etc/newrelic/nrsysmond.cfg' ] }
                 }
             },
             Configure: {
                 commands: {
-                    '10_start_newrelic': {
+                    '10_conf_newrelic': {
+                        command: join('', 'nrsysmond-config --set license_key=', ref('NewRelicKey'))
+                    },
+                    '20_start_newrelic': {
                         command: '/etc/init.d/newrelic-sysmond start'
                     },
                     '99_start_tomcat': {
@@ -231,13 +240,52 @@ template do
         }
     }
 
-    resource 'DnsEntry', Type: 'AWS::Route53::RecordSet', Properties: {
-        HostedZoneName: join('', ref('ZoneName'), '.'),
-        Comment: 'Continuous Integration Service',
-        Name: join('', 'jenkins', '.', ref('ZoneName'), '.'),
-        Type: 'A',
-        TTL: '600',
-        ResourceRecords: [ get_att('JenkinsServer', 'PublicIp') ]
+    resource 'JenkinsAutoScalingGroup', Type: 'AWS::AutoScaling::AutoScalingGroup', Properties: {
+        AvailabilityZones: [ ref('AZ') ],
+        Cooldown: '600',
+        DesiredCapacity: '1',
+        LaunchConfigurationName: ref('JenkinsLaunchConfig'),
+        MaxSize: '1',
+        MinSize: '1',
+        TerminationPolicies: [
+            'OldestInstance',
+            'ClosestToNextInstanceHour'
+        ],
+        VPCZoneIdentifier: [
+            ref('AccessSubnet')
+        ],
+        Tags: [
+            {
+                Key: 'Name',
+                Value: 'Production Jenkins Instance',
+                PropagateAtLaunch: true
+            }
+        ]
     }
+
+    resource 'JenkinsStart', Type: 'AWS::AutoScaling::ScheduledAction', Properties: {
+        AutoScalingGroupName: ref('JenkinsAutoScalingGroup'),
+        DesiredCapacity: '1',
+        MaxSize: '1',
+        MinSize: '1',
+        Recurrence: '45 09 * * *'
+    }
+
+    resource 'JenkinsEnd', Type: 'AWS::AutoScaling::ScheduledAction', Properties: {
+        AutoScalingGroupName: ref('JenkinsAutoScalingGroup'),
+        DesiredCapacity: '1',
+        MaxSize: '1',
+        MinSize: '1',
+        Recurrence: '12 00 * * *'
+    }
+
+#    resource 'DnsEntry', Type: 'AWS::Route53::RecordSet', Properties: {
+#        HostedZoneName: join('', ref('ZoneName'), '.'),
+#        Comment: 'Continuous Integration Service',
+#        Name: join('', 'jenkins', '.', ref('ZoneName'), '.'),
+#        Type: 'A',
+#        TTL: '600',
+#        ResourceRecords: [ get_att('JenkinsServer', 'PublicIp') ]
+#    }
 
 end.exec!
