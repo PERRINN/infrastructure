@@ -55,6 +55,10 @@ template do
         Type: 'String',
         Description: 'Availability Zone to place instance in'
 
+    parameter 'CfnBucket',
+        Type: 'String',
+        Default: 'perrinn-cfn'
+
     parameter 'ServerAmi',
         Type: 'String',
         AllowedPattern: 'ami-[a-z0-9]{8}',
@@ -74,6 +78,10 @@ template do
     parameter 'NewRelicKey',
         Type: 'String',
         Default: '1234'
+
+    parameter 'Product',
+        Type: 'String',
+        Default: 'jenkins'
 
     parameter 'VpcId',
         Type: 'String',
@@ -149,7 +157,7 @@ template do
                 {
                     Action: [ 's3:ListBucket', 's3:GetBucketLocation', 's3:GetObject', 's3:PutObject' ],
                     Effect: 'Allow',
-                    Resource: [ join('', 'arn:aws:s3:::', '/*') ]
+                    Resource: [ join('', 'arn:aws:s3:::', ref('CfnBucket'), '/*') ]
                 },
                 {
                     Action: [
@@ -231,6 +239,21 @@ template do
                     },
                     '20_start_newrelic': {
                         command: '/etc/init.d/newrelic-sysmond start'
+                    },
+                    '30_nr_agent_config': {
+                        command: 'cd /tmp ; unzip /tmp/newrelic-java.zip ; mv newrelic /usr/share/tomcat8'
+                    },
+                    '31_nr_agent_config': {
+                        command: 'echo "\"echo JAVA_OPTS=-javaagent:/usr/share/tomcat8/newrelic/newrelic.jar\""'
+                    },
+                    '90_download_tomcat': {
+                        command: join('', 'aws s3 cp s3://', ref('CfnBucket'), '/', ref('Product'), '/jenkins-backup.tar.gz /tmp/jenkins-backup.tar.gz')
+                    },
+                    '91_restore_tomcat': {
+                        command: 'tar -xf /tmp/jenkins-backup.tar.gz -C /usr/share/tomcat8'
+                    },
+                    '92_tomcat_access': {
+                        command: 'chown -R tomcat:tomcat /usr/share/tomcat8/.jenkins'
                     },
                     '99_start_tomcat': {
                         command: 'service tomcat8 restart'
