@@ -244,7 +244,7 @@ template do
                         command: 'cd /tmp ; unzip /tmp/newrelic-java.zip ; mv newrelic /usr/share/tomcat8'
                     },
                     '31_nr_agent_config': {
-                        command: 'echo "\"JAVA_OPTS=-javaagent:/usr/share/tomcat8/newrelic/newrelic.jar\"" >> /etc/tomcat8/tomcat8.conf'
+                        command: 'echo "JAVA_OPTS=\"-javaagent:/usr/share/tomcat8/newrelic/newrelic.jar\"" >> /etc/tomcat8/tomcat8.conf'
                     },
                     '90_download_tomcat': {
                         command: join('', 'aws s3 cp s3://', ref('CfnBucket'), '/', ref('Product'), '/jenkins-backup.tar.gz /tmp/jenkins-backup.tar.gz')
