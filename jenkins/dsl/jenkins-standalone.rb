@@ -93,7 +93,6 @@ template do
 
     parameter 'ZoneName',
         Type: 'String',
-        MinLength: '4',
         Default: 'perrinnapp.net'
 
     condition 'AccessSecCond',
@@ -101,6 +100,9 @@ template do
 
     condition 'AdminSecCond',
         equal(ref('AdminSecurityGroup'), '')
+
+    condition 'Register53',
+        not_equal(ref('ZoneName'), '')
         
 
     resource 'AdminSecurity', Condition: 'AdminSecCond', Type: 'AWS::EC2::SecurityGroup', Properties: {
@@ -181,6 +183,29 @@ template do
         Roles: [ ref('InstanceRole') ]
     }
 
+    resource 'ElasticIp', Type: 'AWS::EC2::EIP', Properties: {
+        Domain: 'vpc'
+    }
+
+    resource 'NetworkInterface', Type: 'AWS::EC2::NetworkInterface', Properties: {
+        Description: 'Public Interface',
+        GroupSet: [
+            fn_if('AccessSecCond', ref('AccessSecurity'), ref('AccessSecurityGroup'))
+        ],
+        SubnetId: ref('AccessSubnet'),
+        Tags: [
+            {
+                Key: 'Name',
+                Value: 'PROD-JENKINS-ENI'
+            }
+        ]
+    }
+
+    resource 'AssociateIp', Type: 'AWS::EC2::EIPAssociation', Properties: {
+        AllocationId: get_att('ElasticIp', 'AllocationId'),
+        NetworkInterfaceId: ref('NetworkInterface')
+    }
+
     resource 'JenkinsLaunchConfig', Type: 'AWS::AutoScaling::LaunchConfiguration', Properties: {
         AssociatePublicIpAddress: true,
         IamInstanceProfile: ref('BucketProfile'),
@@ -188,8 +213,7 @@ template do
         InstanceType: ref('InstanceType'),
         KeyName: ref('KeyName'),
         SecurityGroups: [
-            fn_if('AdminSecCond', ref('AdminSecurity'), ref('AdminSecurityGroup')),
-            fn_if('AccessSecCond', ref('AccessSecurity'), ref('AccessSecurityGroup'))
+            fn_if('AdminSecCond', ref('AdminSecurity'), ref('AdminSecurityGroup'))
         ],
         UserData: base64(interpolate(file('scripts/userdata.sh')))
     },
@@ -275,7 +299,7 @@ template do
             'ClosestToNextInstanceHour'
         ],
         VPCZoneIdentifier: [
-            ref('AccessSubnet')
+            ref('AdminSubnet')
         ],
         Tags: [
             {
@@ -296,19 +320,19 @@ template do
 
     resource 'JenkinsEnd', Type: 'AWS::AutoScaling::ScheduledAction', Properties: {
         AutoScalingGroupName: ref('JenkinsAutoScalingGroup'),
-        DesiredCapacity: '1',
+        DesiredCapacity: '0',
         MaxSize: '1',
-        MinSize: '1',
+        MinSize: '0',
         Recurrence: '12 00 * * *'
     }
 
-#    resource 'DnsEntry', Type: 'AWS::Route53::RecordSet', Properties: {
-#        HostedZoneName: join('', ref('ZoneName'), '.'),
-#        Comment: 'Continuous Integration Service',
-#        Name: join('', 'jenkins', '.', ref('ZoneName'), '.'),
-#        Type: 'A',
-#        TTL: '600',
-#        ResourceRecords: [ get_att('JenkinsServer', 'PublicIp') ]
-#    }
+    resource 'DnsEntry', Type: 'AWS::Route53::RecordSet', Condition: 'Register53', Properties: {
+        HostedZoneName: join('', ref('ZoneName'), '.'),
+        Comment: 'Continuous Integration Service',
+        Name: join('', 'jenkins', '.', ref('ZoneName'), '.'),
+        Type: 'A',
+        TTL: '600',
+        ResourceRecords: [ ref('ElasticIp') ]
+    }
 
 end.exec!
