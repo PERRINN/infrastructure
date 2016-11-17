@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+#resize2fs /dev/xvda1
+#
 sudo mkdir /opt/apache
 wget -P /tmp http://apache.mirror.serversaustralia.com.au/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
 wget -P /tmp https://services.gradle.org/distributions/gradle-3.1-bin.zip
@@ -22,7 +24,8 @@ sudo rm /tmp/apache-maven-3.3.9-bin.tar.gz
 sudo service tomcat8 stop
 sudo rm -rf /var/lib/tomcat8/webapps/ROOT
 sudo mv /tmp/ROOT.war /var/lib/tomcat8/webapps
-    wget -O /tmp/android-sdk.tar.gz https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
-# We will run out of space in the build if we do this
-#sudo tar -xf /tmp/android-sdk.tar.gz -C /opt
+sudo chkconfig tomcat8 off
+sudo chkconfig newrelic-sysmond off
+wget -O /tmp/android-sdk.tar.gz https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
+sudo tar -xf /tmp/android-sdk.tar.gz -C /opt
 sudo rm /tmp/android-sdk.tar.gz

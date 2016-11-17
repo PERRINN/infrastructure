@@ -3,8 +3,8 @@
 VERSION="2"
 BUILD="1"
 AMI_NAME="jenkins-appserver-v${VERSION}-r${BUILD}"
-REGION="us-east-1"
-AMI_DESC="amzn-ami-hvm-2016.03.3.x86_64-gp2"
+REGION="ap-southeast-2"
+AMI_DESC="amzn-ami-hvm-2016.09.0.20161028-x86_64-gp2"
 
 echo "Figuring out:"
 VPC=$(aws ec2 describe-vpcs --region ${REGION} --filters "Name=isDefault,Values=true" --output text --query 'Vpcs[*].{ID:VpcId}')

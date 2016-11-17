@@ -21,7 +21,6 @@
 			"availability_zone": "{{user `aws_az`}}",			
 			"source_ami": "{{ user `aws_ami` }}",
 			"ssh_username": "{{ user `aws_user_name` }}",
-            "ssh_timeout": "5m",
 			"tags": {
 				"BuildNumber": "{{user `build_number`}}",
 				"BuildUUID": "{{user `build_uuid`}}"
@@ -29,7 +28,21 @@
             "associate_public_ip_address" : false,
 			"type": "amazon-ebs",
             "vpc_id": "{{user `vpc_id`}}",
-            "subnet_id": "{{user `subnet_id`}}"
+            "subnet_id": "{{user `subnet_id`}}",
+			"launch_block_device_mappings": [
+				{
+					"device_name": "/dev/xvda",
+					"volume_size": "100",
+					"delete_on_termination": "true"
+				}
+			],
+			"ami_block_device_mappings": [
+				{
+					"device_name": "/dev/xvda",
+					"volume_size": "100",
+					"delete_on_termination": "true"
+				}
+			]
 
 		}
 	],
