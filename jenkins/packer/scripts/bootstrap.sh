@@ -30,4 +30,6 @@ sudo chkconfig newrelic-sysmond off
 wget -O /tmp/android-sdk.tar.gz https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
 sudo tar -xf /tmp/android-sdk.tar.gz -C /opt
 sudo rm /tmp/android-sdk.tar.gz
-echo "y" | /opt/android-sdk-linux/tools/android update sdk --all --no-ui
+sudo mv /tmp/devenv.sh /etc/profile.d/devenv.sh
+# Doing the sdk update inside packer takes to long, and times out
+#echo "y" | /opt/android-sdk-linux/tools/android update sdk --all --no-ui

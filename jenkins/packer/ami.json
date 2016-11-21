@@ -61,6 +61,12 @@
 		},
 
 		{
+			"type": "file",
+			"source": "scripts/devenv.sh",
+			"destination": "/tmp/devenv.sh"
+		},
+
+		{
 			"type": "shell",
 			"script": "scripts/bootstrap.sh"
 		}
