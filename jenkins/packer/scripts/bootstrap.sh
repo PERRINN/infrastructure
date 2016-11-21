@@ -13,6 +13,7 @@ sudo yum erase -y java-1.7.0-openjdk
 sudo rpm -Uvh http://yum.newrelic.com/pub/newrelic/el5/x86_64/newrelic-repo-5-3.noarch.rpm
 sudo yum install -y newrelic-sysmond git gcc java-1.8.0-openjdk tomcat8 tomcat8-webapps tomcat8-docs-webapp tomcat8-admin-webapps
 sudo yum groupinstall -y "Development Tools"
+sudo rpm -i /tmp/jdk.rpm
 sudo yum update -y 
 unzip /tmp/packer.zip
 sudo mv packer /usr/local/bin
@@ -29,3 +30,4 @@ sudo chkconfig newrelic-sysmond off
 wget -O /tmp/android-sdk.tar.gz https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
 sudo tar -xf /tmp/android-sdk.tar.gz -C /opt
 sudo rm /tmp/android-sdk.tar.gz
+echo "y" | /opt/android-sdk-linux/tools/android update sdk --all --no-ui

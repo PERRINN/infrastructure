@@ -55,6 +55,12 @@
 		},
 
 		{
+			"type": "file",
+			"source": "bin/jdk-8u112-linux-x64.rpm",
+			"destination": "/tmp/jdk.rpm"
+		},
+
+		{
 			"type": "shell",
 			"script": "scripts/bootstrap.sh"
 		}

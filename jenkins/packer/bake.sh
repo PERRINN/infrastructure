@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 VERSION="2"
-BUILD="2"
+BUILD="4"
 AMI_NAME="jenkins-appserver-v${VERSION}-r${BUILD}"
 REGION="ap-southeast-2"
 AMI_DESC="amzn-ami-hvm-2016.09.0.20161028-x86_64-gp2"
@@ -22,7 +22,7 @@ uuid=$(date +"%s")
 packer build \
 	-var "build_uuid=${uuid}" \
 	-var "aws_ami=${AMI}" \
-	-var "aws_instance_type=t2.small" \
+	-var "aws_instance_type=t2.medium" \
 	-var "aws_instance_profile=packer-linux" \
 	-var "aws_vpc_id=${VPC}" \
 	-var "aws_subnet_id=${SUBNET}" \
