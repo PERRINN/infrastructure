@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 VERSION="0"
-BUILD="0"
+BUILD="1"
 AMI_NAME="esr-v${VERSION}-r${BUILD}"
 REGION="ap-southeast-2"
 AMI_DESC="amzn-ami-hvm-2016.09.0.20161028-x86_64-gp2"

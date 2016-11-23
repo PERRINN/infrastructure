@@ -50,8 +50,14 @@
 	"provisioners": [
 		{
 			"type": "file",
-			"source": "bin/jdk-8u112-linux-x64.rpm",
-			"destination": "/tmp/jdk.rpm"
+			"source": "bin/sysctl.conf",
+			"destination": "/tmp/sysctl.conf"
+		},
+
+		{
+			"type": "file",
+			"source": "bin/limits.conf",
+			"destination": "/tmp/limits.conf"
 		},
 
 		{
