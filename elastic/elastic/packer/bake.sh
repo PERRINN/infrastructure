@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+VERSION="0"
+BUILD="0"
+AMI_NAME="esr-v${VERSION}-r${BUILD}"
+REGION="ap-southeast-2"
+AMI_DESC="amzn-ami-hvm-2016.09.0.20161028-x86_64-gp2"
+
+echo "Figuring out:"
+VPC=$(aws ec2 describe-vpcs --region ${REGION} --filters "Name=isDefault,Values=true" --output text --query 'Vpcs[*].{ID:VpcId}')
+echo "VPC...${VPC}"
+AZ=${REGION}b
+echo "AZ...${AZ}"
+SUBNET=$(aws ec2 describe-subnets --region ${REGION} --filters "Name=vpc-id,Values=${VPC}" "Name=availabilityZone,Values=${AZ}" --output text --query 'Subnets[0].{ID:SubnetId}')
+echo "Subnet...${SUBNET}"
+AMI=$(aws ec2 describe-images --region ${REGION} --filters "Name=name,Values=${AMI_DESC}" --output text --query 'Images[*].{ID:ImageId}')
+echo "AMI...${AMI}"
+
+
+packer build \
+	-var "aws_ami=${AMI}" \
+	-var "aws_instance_type=t2.medium" \
+	-var "aws_instance_profile=packer-linux" \
+	-var "aws_vpc_id=${VPC}" \
+	-var "aws_subnet_id=${SUBNET}" \
+	-var "aws_region=${REGION}" \
+    -var "version=1" \
+    -var "build=0" \
+	-var "ami_name=${AMI_NAME}" \
+	-var "aws_az=${AZ}" \
+	ami.json
+	
