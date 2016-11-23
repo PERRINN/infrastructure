@@ -12,3 +12,6 @@ sudo yum update -y
 sudo chkconfig newrelic-sysmond off
 sudo wget -O /tmp/elasticsearch.tar.gz https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.0.1.tar.gz
 sudo tar -xf /tmp/elasticsearch.tar.gz -C /opt
+sudo groupadd elastic
+sudo useradd -c "Elastic Search" -d /opt/elasticsearch-5.0.1 -g elastic -s /bin/bash elastic
+
