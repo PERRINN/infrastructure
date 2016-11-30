@@ -50,18 +50,6 @@
 	"provisioners": [
 		{
 			"type": "file",
-			"source": "bin/newrelic-java-3.32.0.zip",
-			"destination": "/tmp/newrelic-java.zip"
-		},
-
-		{
-			"type": "file",
-			"source": "bin/jdk-8u112-linux-x64.rpm",
-			"destination": "/tmp/jdk.rpm"
-		},
-
-		{
-			"type": "file",
 			"source": "scripts/devenv.sh",
 			"destination": "/tmp/devenv.sh"
 		},

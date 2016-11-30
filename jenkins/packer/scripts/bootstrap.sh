@@ -3,6 +3,8 @@
 #resize2fs /dev/xvda1
 #
 sudo mkdir /opt/apache
+wget -O /tmp/jdk.rpm http://perrapp-dist.s3-website-ap-southeast-2.amazonaws.com/jdk-8u112-linux-x64.rpm
+wget -O /tmp/newrelic-java.zip http://perrapp-dist.s3-website-ap-southeast-2.amazonaws.com/newrelic-java-3.32.0.zip
 wget -P /tmp http://apache.mirror.serversaustralia.com.au/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
 wget -P /tmp https://services.gradle.org/distributions/gradle-3.1-bin.zip
 wget -P /tmp https://services.gradle.org/distributions/gradle-2.14-bin.zip
