@@ -3,7 +3,7 @@
 VERSION="2"
 BUILD="4"
 AMI_NAME="jenkins-appserver-v${VERSION}-r${BUILD}"
-REGION="ap-southeast-2"
+REGION="us-east-1"
 AMI_DESC="amzn-ami-hvm-2016.09.0.20161028-x86_64-gp2"
 
 echo "Figuring out:"
